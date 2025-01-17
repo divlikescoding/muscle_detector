@@ -1,6 +1,6 @@
 # Louie Lab Muscle v. Non-muscle Detector
 
-Welcome to the Louie Lab Muscle v. Non-muscle Detector web application! This tool allows you to analyze heart cross-sections by detecting muscle and non-muscle regions using a Machine Learning Segmentation Model. Below are the steps to get started and use the application effectively.
+Welcome to the Louie Lab Muscle v. Non-muscle Detector web application! This tool allows you to use a Machine Learning Segmentation Model to detect non-muscle regions in a cross-sectional heart image. Below are the steps to get started and use the application effectively.
 
 ## Getting Started
 
