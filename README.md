@@ -23,6 +23,9 @@ Welcome to the Louie Lab Muscle v. Non-muscle Detector web application! This too
      # Install dependencies
      pip install -r requirements.txt
 
+     #Initialize Database
+     python manage.py migrate
+
      # Start the application
      python manage.py runserver
      ```
