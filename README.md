@@ -10,7 +10,7 @@ Welcome to the Louie Lab Muscle v. Non-muscle Detector web application! This too
 
 2. **Run the Project**
    - Open a terminal or command prompt.
-   - Download python by going to this link(choose mac or windows or linux based on your computer): https://www.python.org/downloads/
+   - Download python (python 3.10 or higher) by going to this link(choose mac or windows or linux based on your computer): https://www.python.org/downloads/
    - Navigate to the folder where the repository files are extracted.
    - Follow the instructions below to start the application:
 
