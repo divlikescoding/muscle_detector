@@ -1,15 +1,16 @@
 #Django Imports
 from django.http import HttpResponse
 
-from django.shortcuts import render
-from django.shortcuts import render
-
+from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.conf import settings
 
 import os
 import numpy as np
 import cv2
 import torch
+import shutil
+import roifile
 
 import torchvision.transforms as transforms
 
@@ -43,10 +44,12 @@ def get_padded_image():
 def get_model(device):
     model = UNet(n_channels=3, n_classes=1, bilinear=True)
 
-    model_weights = torch.load(settings.MODEL_WEIGHTS_PATH, map_location=device)
+    model_weights = torch.load(settings.MODEL_WEIGHTS_PATH, map_location=device, weights_only=True)
     model.load_state_dict(model_weights)
 
     model.eval()
+
+    model.to(device)
 
     return model
 
@@ -70,10 +73,6 @@ def predict_mask(image):
 
     device = get_device()
     model = get_model(device)
-
-    model.to(device)
-
-    print(device)
 
     transform = transforms.Compose(
         [transforms.ToTensor(),
@@ -112,8 +111,14 @@ def predict_mask(image):
             height = (height[0] + patch_size, height[1] + patch_size)
         else:
             width = (width[0] + patch_size, width[1] + patch_size)
-    
+
+    pred_mask = pred_mask * 255 
     return pred_mask
+
+def save_mask(mask):
+    mask = mask.astype(np.uint8)
+    mask_path = os.path.join(settings.DATA_PATH, "mask.png")
+    cv2.imwrite(mask_path, mask)
 
 def reshape_pred_mask(original_shape, mask):
     height_excess = (mask.shape[0] - original_shape[0])
@@ -128,27 +133,50 @@ def reshape_pred_mask(original_shape, mask):
     return mask[height_bottom:mask.shape[0] - height_top, width_bottom:mask.shape[1] - width_top]
 
 def make_rois_from_mask(mask):
-    pass
+    mask = mask.astype(np.uint8)
+    roi_directory = os.path.join(settings.DATA_PATH, "rois")
+    os.makedirs(roi_directory, exist_ok=True)
+
+    contours, h = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    curr_index = 1
+    for i, contour in enumerate(contours):
+        contour = contour.squeeze()
+        contour = contour.astype(float)
+
+        roi_output = roifile.ImagejRoi.frompoints(contour)
+
+        output_file = os.path.join(roi_directory, f"{curr_index}.roi")
+        roi_output.tofile(output_file)
+        curr_index += 1
+    
+    folder_to_zip = roi_directory
+    output_zip = os.path.join(settings.DATA_PATH, "rois")
+    shutil.make_archive(output_zip, 'zip', folder_to_zip)
+
 
 """Helper Function END"""
 
 # Create your views here.
 def index(request):
+    if os.path.exists(settings.DATA_PATH) and os.path.isdir(settings.DATA_PATH):
+        shutil.rmtree(settings.DATA_PATH)
     return render(request, "index.html", {})
 
 def process_image(request):
     image = request.FILES.get("image", None)
-
     save_uploaded_file(image)
     original_shape, padded_image = get_padded_image()
-
     mask = predict_mask(padded_image)
     mask = reshape_pred_mask(original_shape, mask)
+    save_mask(mask)
+    make_rois_from_mask(mask)
+    return redirect(reverse("heart_segmentation:result"))
 
-    mask = mask * 255
-    mask = mask.astype(np.uint8)
-    mask_path = os.path.join(settings.DATA_PATH, "mask.png")
+def result(request):
+    roi_zip_dir = os.path.join(settings.DATA_PATH, "rois.zip")
 
-    cv2.imwrite(mask_path, mask)
-
-    return HttpResponse("This is a test post")
+    roi_zip_dir = f"{settings.MEDIA_URL}rois.zip"
+    context = {
+        "roi_zip_dir": roi_zip_dir
+    }
+    return render(request, "result.html", context)

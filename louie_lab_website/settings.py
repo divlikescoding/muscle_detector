@@ -132,3 +132,6 @@ DATA_PATH = os.path.join(BASE_DIR, "louie_lab_website/data/")
 MODEL_WEIGHTS_PATH = os.path.join(BASE_DIR, "heart_segmentation/unet/unet_model_weights.pth")
 
 PATCH_SIZE = 512
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = DATA_PATH
