@@ -11,6 +11,9 @@ import cv2
 import torch
 import shutil
 import roifile
+from PIL import Image, ImageDraw
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 import torchvision.transforms as transforms
 
@@ -139,7 +142,7 @@ def make_rois_from_mask(mask):
 
     contours, h = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     curr_index = 1
-    for i, contour in enumerate(contours):
+    for _, contour in enumerate(contours):
         contour = contour.squeeze()
         contour = contour.astype(float)
 
@@ -152,6 +155,78 @@ def make_rois_from_mask(mask):
     folder_to_zip = roi_directory
     output_zip = os.path.join(settings.DATA_PATH, "rois")
     shutil.make_archive(output_zip, 'zip', folder_to_zip)
+
+def predicted_mask_overlay():
+    # Load the image 
+    
+    input_file_path = os.path.join(settings.DATA_PATH, "input.tif")
+    
+    result = cv2.imread(input_file_path)
+    
+    m1 = np.ones((result.shape[0], result.shape[1], 1))
+    result = np.dstack((result, m1))
+    result = result.astype(float)
+    # m2 = np.zeros((result.shape[0], result.shape[1], 2)) 
+    # mask_color = np.dstack((m1, m2))
+
+    # result cv2.cvtColor(rgb_data, rgba , cv::COLOR_RGB2RGBA)
+
+    # Load the ROI coordinates
+
+    roi_dir = os.path.join(settings.DATA_PATH, "rois")
+
+    # Store the results
+
+    for file in os.listdir(roi_dir):
+
+        f_path = os.path.join(roi_dir, file)
+
+        roi = roifile.roiread(f_path)
+        roi_coordinates_raw = roi.coordinates()
+        roi_coordinates = []
+
+        # Convert raw coordinates to tuples and add as separate contours
+        contour = []
+        for i, point in enumerate(roi_coordinates_raw):
+            contour.append((point[0], point[1]))
+            
+            # If there's a significant jump between consecutive points, treat as new contour
+            if i > 0 and np.linalg.norm(np.array(point) - np.array(roi_coordinates_raw[i - 1])) > 100:  # adjust 100 as needed
+                roi_coordinates.append(contour)
+                contour = []  # Start a new contour
+
+        # Add last contour if not empty
+        if contour:
+            roi_coordinates.append(contour)
+
+        # Create a mask image
+        mask = Image.new("RGBA", (result.shape[1], result.shape[0]), (0,0,0,0))
+        draw = ImageDraw.Draw(mask, 'RGBA')
+
+        # Draw each contour individually to avoid connections between them
+        for contour in roi_coordinates:
+            draw.polygon(contour, outline=(1, 255, 1, 1), fill=(0, 0, 0, 0), width = 2)
+
+
+
+        mask = np.array(mask)
+        
+        # mask = mask.astype(np.uint8)
+        # Blend the mask with the image
+
+        print(mask.dtype)
+        print(result.dtype)
+        # result = cv2.addWeighted(result, 1, mask, 0.5, 0.4)
+        result = np.where(mask > 0, mask, result)
+        
+
+
+        # Display and save the result
+    result = result[:,:,:3]
+    os.makedirs(settings.DATA_PATH, exist_ok=True)
+    output = os.path.join(settings.DATA_PATH, "overlay.png")
+    cv2.imwrite(output, result)
+       
 
 
 """Helper Function END"""
@@ -170,13 +245,18 @@ def process_image(request):
     mask = reshape_pred_mask(original_shape, mask)
     save_mask(mask)
     make_rois_from_mask(mask)
+    predicted_mask_overlay()
     return redirect(reverse("heart_segmentation:result"))
 
 def result(request):
     roi_zip_dir = os.path.join(settings.DATA_PATH, "rois.zip")
+    input_file_path = os.path.join(settings.DATA_PATH, "overlay.png")
 
     roi_zip_dir = f"{settings.MEDIA_URL}rois.zip"
+    input_file_path = f"{settings.MEDIA_URL}overlay.png"
+
     context = {
-        "roi_zip_dir": roi_zip_dir
+        "roi_zip_dir": roi_zip_dir,
+        "input_file_path": input_file_path
     }
     return render(request, "result.html", context)
