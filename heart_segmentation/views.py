@@ -160,16 +160,10 @@ def predicted_mask_overlay():
     # Load the image 
     
     input_file_path = os.path.join(settings.DATA_PATH, "input.tif")
-    
     result = cv2.imread(input_file_path)
-    
     m1 = np.ones((result.shape[0], result.shape[1], 1))
     result = np.dstack((result, m1))
     result = result.astype(float)
-    # m2 = np.zeros((result.shape[0], result.shape[1], 2)) 
-    # mask_color = np.dstack((m1, m2))
-
-    # result cv2.cvtColor(rgb_data, rgba , cv::COLOR_RGB2RGBA)
 
     # Load the ROI coordinates
 
@@ -205,30 +199,21 @@ def predicted_mask_overlay():
 
         # Draw each contour individually to avoid connections between them
         for contour in roi_coordinates:
-            draw.polygon(contour, outline=(1, 255, 1, 1), fill=(0, 0, 0, 0), width = 2)
-
-
+            draw.polygon(contour, outline=(1, 200, 1, 1), fill=(0, 0, 0, 0), width = 3)
 
         mask = np.array(mask)
-        
-        # mask = mask.astype(np.uint8)
         # Blend the mask with the image
-
+        
         print(mask.dtype)
         print(result.dtype)
-        # result = cv2.addWeighted(result, 1, mask, 0.5, 0.4)
         result = np.where(mask > 0, mask, result)
-        
 
-
-        # Display and save the result
+    # Display and save the result
     result = result[:,:,:3]
     os.makedirs(settings.DATA_PATH, exist_ok=True)
     output = os.path.join(settings.DATA_PATH, "overlay.png")
     cv2.imwrite(output, result)
        
-
-
 """Helper Function END"""
 
 # Create your views here.
