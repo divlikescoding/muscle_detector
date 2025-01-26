@@ -11,14 +11,13 @@
     .scrollable-container {
       max-height: 600px; 
       overflow-y: auto; 
-      border: 1px solid #ddd; 
-      padding: 10px; 
+      border: 2px solid #000000; 
     }
   </style>
-</head>
+</head>e
 <body>
     <div class="container mt-5">
-        <h1 class="text-center mb-4">Results</h1>
+        <h2 class="text-center mb-4">Results</h2>
 
         <div class="row mt-4">
             <div class="col text-center">
@@ -34,16 +33,14 @@
 
     </div>
     <div class="container mt-5">
-        <h2 class="mb-3 text-center">Predictions Preview</h2>
+        <h3 class="mb-3 text-center">Predictions Preview</h3>
         <div class="scrollable-container">
             <div class="image-wrapper">
-            <img src="{{ input_file_path }}" alt="Image 1" class="img-fluid">
+            <img src="{{ input_file_path }}" class="img-fluid">
             </div>
         </div>
     </div>
-
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>
