@@ -203,9 +203,6 @@ def predicted_mask_overlay():
 
         mask = np.array(mask)
         # Blend the mask with the image
-        
-        print(mask.dtype)
-        print(result.dtype)
         result = np.where(mask > 0, mask, result)
 
     # Display and save the result
