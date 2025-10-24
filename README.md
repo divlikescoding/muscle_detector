@@ -2,6 +2,10 @@
 
 Welcome to the Muscle v. Non-muscle Detector web application! This tool allows you to use a Machine Learning Segmentation Model to detect non-muscle regions in a cross-sectional heart image. Below are the steps to get started and use the application effectively.
 
+## Demo
+
+![Alt Text](demo.gif)
+
 ## Getting Started
 
 1. **Download the Repository**
